@@ -24,7 +24,7 @@ namespace {
 // std::string::iterators in the same range as the URI part.
 //
 inline std::pair<std::string::iterator, std::string::iterator> mutable_part(
-    std::string &str, detail::uri_part part) {
+    std::string &str, string_view part) {
   auto view = string_view(str);
 
   auto first_index = std::distance(std::begin(view), std::begin(part));
@@ -41,7 +41,7 @@ inline std::pair<std::string::iterator, std::string::iterator> mutable_part(
 // This is a convenience function that converts a part of a
 // std::string to a string_view.
 inline string_view to_string_view(const std::string &uri,
-                                  detail::uri_part part) {
+                                  string_view part) {
   if (!part.empty()) {
     const char *c_str = uri.c_str();
     const char *part_begin = &(*(std::begin(part)));
@@ -138,21 +138,21 @@ void uri::initialize(optional<string_type> scheme,
   }
 
   if (user_info) {
-    uri_parts_.hier_part.user_info = detail::copy_part(*user_info, it);
+    uri_parts_.user_info = detail::copy_part(*user_info, it);
     ++it;  // ignore @
   }
 
   if (host) {
-    uri_parts_.hier_part.host = detail::copy_part(*host, it);
+    uri_parts_.host = detail::copy_part(*host, it);
   }
 
   if (port) {
     ++it;  // ignore :
-    uri_parts_.hier_part.port = detail::copy_part(*port, it);
+    uri_parts_.port = detail::copy_part(*port, it);
   }
 
   if (path) {
-    uri_parts_.hier_part.path =  detail::copy_part(*path, it);
+    uri_parts_.path =  detail::copy_part(*path, it);
   }
 
   if (query) {
@@ -214,39 +214,39 @@ uri::string_view uri::scheme() const noexcept {
 }
 
 bool uri::has_user_info() const noexcept {
-  return static_cast<bool>(uri_parts_.hier_part.user_info);
+  return static_cast<bool>(uri_parts_.user_info);
 }
 
 uri::string_view uri::user_info() const noexcept {
   return has_user_info()
-             ? to_string_view(uri_, *uri_parts_.hier_part.user_info)
+             ? to_string_view(uri_, *uri_parts_.user_info)
              : string_view{};
 }
 
 bool uri::has_host() const noexcept {
-  return static_cast<bool>(uri_parts_.hier_part.host);
+  return static_cast<bool>(uri_parts_.host);
 }
 
 uri::string_view uri::host() const noexcept {
-  return has_host() ? to_string_view(uri_, *uri_parts_.hier_part.host)
+  return has_host() ? to_string_view(uri_, *uri_parts_.host)
                     : string_view{};
 }
 
 bool uri::has_port() const noexcept {
-  return static_cast<bool>(uri_parts_.hier_part.port);
+  return static_cast<bool>(uri_parts_.port);
 }
 
 uri::string_view uri::port() const noexcept {
-  return has_port() ? to_string_view(uri_, *uri_parts_.hier_part.port)
+  return has_port() ? to_string_view(uri_, *uri_parts_.port)
                     : string_view{};
 }
 
 bool uri::has_path() const noexcept {
-  return static_cast<bool>(uri_parts_.hier_part.path);
+  return static_cast<bool>(uri_parts_.path);
 }
 
 uri::string_view uri::path() const noexcept {
-  return has_path() ? to_string_view(uri_, *uri_parts_.hier_part.path)
+  return has_path() ? to_string_view(uri_, *uri_parts_.path)
                     : string_view{};
 }
 
@@ -356,9 +356,9 @@ uri uri::normalize(uri_comparison_level level) const {
                      [](char ch) { return std::tolower(ch, std::locale()); });
     }
 
-    // if (parts.hier_part.host) {
+    // if (parts.host) {
     //   std::string::iterator first, last;
-    //   std::tie(first, last) = mutable_part(normalized, *parts.hier_part.host);
+    //   std::tie(first, last) = mutable_part(normalized, *parts.host);
     //   std::transform(first, last, first,
     //                  [](char ch) { return std::tolower(ch, std::locale()); });
     // }
@@ -380,9 +380,9 @@ uri uri::normalize(uri_comparison_level level) const {
     ignore(is_valid);
     assert(is_valid);
 
-    if (parts.hier_part.path) {
+    if (parts.path) {
       uri::string_type path = detail::normalize_path_segments(
-          to_string_view(normalized, *parts.hier_part.path));
+          to_string_view(normalized, *parts.path));
 
       // put the normalized path back into the uri
       optional<string_type> query, fragment;
@@ -395,7 +395,7 @@ uri uri::normalize(uri_comparison_level level) const {
       }
 
       auto path_begin = std::begin(normalized);
-      auto path_range = mutable_part(normalized, *parts.hier_part.path);
+      auto path_range = mutable_part(normalized, *parts.path);
       std::advance(path_begin, std::distance(path_begin, path_range.first));
       normalized.erase(path_begin, std::end(normalized));
       normalized.append(path);

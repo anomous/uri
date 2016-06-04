@@ -14,41 +14,41 @@
 
 namespace network {
 namespace detail {
-class uri_part {
- public:
-  typedef string_view::value_type value_type;
-  typedef string_view::iterator iterator;
-  typedef string_view::const_iterator const_iterator;
+// class uri_part {
+//  public:
+//   typedef string_view::value_type value_type;
+//   typedef string_view::iterator iterator;
+//   typedef string_view::const_iterator const_iterator;
+//
+//   uri_part(const_iterator first, const_iterator last)
+//       : first(first), last(last) {}
+//
+//   const_iterator begin() const { return first; }
+//
+//   const_iterator end() const { return last; }
+//
+//   bool empty() const { return first == last; }
+//
+//   std::string to_string() const { return std::string(first, last); }
+//
+//  private:
+//   const_iterator first, last;
+// };
 
-  uri_part() {}
-
-  uri_part(const_iterator first, const_iterator last)
-      : first(first), last(last) {}
-
-  const_iterator begin() const { return first; }
-
-  const_iterator end() const { return last; }
-
-  bool empty() const { return first == last; }
-
-  std::string to_string() const { return std::string(first, last); }
-
- private:
-  const_iterator first, last;
-};
-
-struct hierarchical_part {
-  optional<uri_part> user_info;
-  optional<uri_part> host;
-  optional<uri_part> port;
-  optional<uri_part> path;
-};
+inline string_view uri_part(string_view::const_iterator first,
+                            string_view::const_iterator last) {
+  const char *ptr = &(*first);
+  return string_view(ptr, last - first);
+}
 
 struct uri_parts {
-  optional<uri_part> scheme;
-  hierarchical_part hier_part;
-  optional<uri_part> query;
-  optional<uri_part> fragment;
+  optional<string_view> scheme;
+  optional<string_view> user_info;
+  optional<string_view> host;
+  optional<string_view> port;
+  optional<string_view> path;
+  optional<string_view> query;
+  optional<string_view> fragment;
 };
 }  // namespace detail
 }  // namespace network
