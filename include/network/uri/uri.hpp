@@ -23,7 +23,6 @@
 #include <network/optional.hpp>
 #include <network/uri/config.hpp>
 #include <network/uri/uri_errors.hpp>
-#include <network/uri/detail/uri_parts.hpp>
 #include <network/uri/detail/encode.hpp>
 #include <network/uri/detail/decode.hpp>
 #include <network/uri/detail/translate.hpp>
@@ -51,6 +50,23 @@ enum class uri_comparison_level {
  * \sa uri
  */
 class uri_builder;
+
+/**
+ * \ingroup uri
+ * \struct uri_parts network/uri/uri.hpp network/uri.hpp
+ * \brief A data structure containing references to the URI parts.
+ * \sa uri
+ */
+struct uri_parts {
+  optional<string_view> scheme;
+  optional<string_view> user_info;
+  optional<string_view> host;
+  optional<string_view> port;
+  optional<string_view> path;
+  optional<string_view> query;
+  optional<string_view> fragment;
+};
+
 
 /**
  * \ingroup uri
@@ -561,10 +577,11 @@ class uri {
 
   string_type uri_;
   string_view uri_view_;
-  detail::uri_parts uri_parts_;
+  uri_parts uri_parts_;
 };
 
 /**
+ * \ingroup uri
  * \brief \c uri factory function.
  * \param first The first element in a string sequence.
  * \param last The end + 1th element in a string sequence.
@@ -576,6 +593,23 @@ inline uri make_uri(InputIter first, InputIter last, std::error_code &ec) {
 }
 
 /**
+ * \ingroup uri
+ * \brief Parse a URI, and break it down into parts.
+ *
+ * On failure, the iterator passed as 'first' will be at the character
+ * where the parsing failed.
+ *
+ * \param first The first element in the URI string.
+ * \param last The end + 1th element in the URI string.
+ * \param parts The URI parts, filled on success.
+ * \return \c true if the URI was correctly parsed and the parts are
+ *         filled, \c false otherwise.
+ */
+bool parse_uri(string_view::const_iterator &first,
+               string_view::const_iterator last, uri_parts &parts);
+
+/**
+ * \ingroup uri
  * \brief \c uri factory function.
  * \param source A source string that is to be parsed as a URI.
  * \param ec Error code set if the source is not a valid URI.

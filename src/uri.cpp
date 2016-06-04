@@ -9,7 +9,6 @@
 #include <algorithm>
 #include <functional>
 #include "network/uri/uri.hpp"
-#include "detail/uri_parse.hpp"
 #include "detail/uri_advance_parts.hpp"
 #include "detail/uri_percent_encode.hpp"
 #include "detail/uri_normalize.hpp"
@@ -183,7 +182,7 @@ uri::uri(uri &&other) noexcept : uri_(std::move(other.uri_)),
   detail::advance_parts(uri_view_, uri_parts_, other.uri_parts_);
   other.uri_.clear();
   other.uri_view_ = string_view(other.uri_);
-  other.uri_parts_ = detail::uri_parts();
+  other.uri_parts_ = uri_parts();
 }
 
 uri::~uri() {}
@@ -194,10 +193,10 @@ uri &uri::operator=(uri other) {
 }
 
 void uri::swap(uri &other) noexcept {
-  advance_parts(other.uri_view_, uri_parts_, other.uri_parts_);
+  detail::advance_parts(other.uri_view_, uri_parts_, other.uri_parts_);
   uri_.swap(other.uri_);
   uri_view_.swap(other.uri_view_);
-  advance_parts(other.uri_view_, other.uri_parts_, uri_parts_);
+  detail::advance_parts(other.uri_view_, other.uri_parts_, uri_parts_);
 }
 
 uri::const_iterator uri::begin() const noexcept { return uri_view_.begin(); }
@@ -343,7 +342,7 @@ bool uri::is_opaque() const noexcept {
 uri uri::normalize(uri_comparison_level level) const {
   string_type normalized(uri_);
   string_view normalized_view(normalized);
-  detail::uri_parts parts;
+  uri_parts parts;
   detail::advance_parts(normalized_view, parts, uri_parts_);
 
   if (uri_comparison_level::syntax_based == level) {
@@ -376,7 +375,7 @@ uri uri::normalize(uri_comparison_level level) const {
 
     // need to parse the parts again as the underlying string has changed
     const_iterator it = std::begin(normalized_view), last = std::end(normalized_view);
-    bool is_valid = detail::parse(it, last, parts);
+    bool is_valid = parse_uri(it, last, parts);
     ignore(is_valid);
     assert(is_valid);
 
@@ -563,7 +562,7 @@ bool uri::initialize(const string_type &uri) {
   if (!uri_.empty()) {
     uri_view_ = string_view(uri_);
     const_iterator it = std::begin(uri_view_), last = std::end(uri_view_);
-    bool is_valid = detail::parse(it, last, uri_parts_);
+    bool is_valid = parse_uri(it, last, uri_parts_);
     return is_valid;
   }
   return true;

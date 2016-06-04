@@ -4,14 +4,21 @@
 // http://www.boost.org/LICENSE_1_0.txt)
 
 #include "uri_parse.hpp"
+#include <cstdlib>
+#include <cctype>
 #include <iterator>
 #include <limits>
 #include "grammar.hpp"
-#include <network/uri/detail/uri_parts.hpp>
+#include <network/uri/uri.hpp>
 
 namespace network {
-namespace detail {
 namespace {
+inline string_view uri_part(string_view::const_iterator first,
+                            string_view::const_iterator last) {
+  const char *ptr = &(*first);
+  return string_view(ptr, last - first);
+}
+
 enum class uri_state {
   scheme,
   hier_part,
@@ -45,7 +52,7 @@ bool validate_scheme(string_view::const_iterator &it,
     if (*it == ':') {
       break;
     }
-    else if (!isalnum(it, last) && !is_in(it, last, "+-.")) {
+    else if (!detail::isalnum(it, last) && !detail::is_in(it, last, "+-.")) {
       return false;
     }
   }
@@ -56,10 +63,10 @@ bool validate_scheme(string_view::const_iterator &it,
 bool validate_user_info(string_view::const_iterator it,
                         string_view::const_iterator last) {
   while (it != last) {
-    if (!is_unreserved(it, last) &&
-        !is_pct_encoded(it, last) &&
-        !is_sub_delim(it, last) &&
-        !is_in(it, last, ":")) {
+    if (!detail::is_unreserved(it, last) &&
+        !detail::is_pct_encoded(it, last) &&
+        !detail::is_sub_delim(it, last) &&
+        !detail::is_in(it, last, ":")) {
       return false;
     }
   }
@@ -77,7 +84,7 @@ bool set_host_and_port(string_view::const_iterator first,
     auto port_start = last_colon;
     ++port_start;
     parts.host = uri_part(first, last_colon);
-    if (!is_valid_port(port_start)) {
+    if (!detail::is_valid_port(port_start)) {
       return false;
     }
     parts.port = uri_part(port_start, last);
@@ -88,7 +95,7 @@ bool set_host_and_port(string_view::const_iterator first,
 bool validate_fragment(string_view::const_iterator &it,
                        string_view::const_iterator last) {
   while (it != last) {
-    if (!is_pchar(it, last) && !is_in(it, last, "?/")) {
+    if (!detail::is_pchar(it, last) && !detail::is_in(it, last, "?/")) {
       return false;
     }
   }
@@ -96,8 +103,8 @@ bool validate_fragment(string_view::const_iterator &it,
 }
 } // namespace
 
-bool parse(string_view::const_iterator &it, string_view::const_iterator last,
-           uri_parts &parts) {
+bool parse_uri(string_view::const_iterator &it, string_view::const_iterator last,
+               uri_parts &parts) {
   auto state = uri_state::scheme;
 
   auto first = it;
@@ -147,7 +154,7 @@ bool parse(string_view::const_iterator &it, string_view::const_iterator last,
       }
     }
     else if (hp_state == hier_part_state::authority) {
-      if (is_in(first, last, "@:")) {
+      if (detail::is_in(first, last, "@:")) {
         return false;
       }
 
@@ -294,7 +301,7 @@ bool parse(string_view::const_iterator &it, string_view::const_iterator last,
     else if (hp_state == hier_part_state::port) {
       if (*first == '/') {
         // the port is empty, but valid
-        if (!is_valid_port(first)) {
+        if (!detail::is_valid_port(first)) {
           return false;
         }
         parts.port = uri_part(first, it);
@@ -305,7 +312,7 @@ bool parse(string_view::const_iterator &it, string_view::const_iterator last,
       }
 
       if (*it == '/') {
-        if (!is_valid_port(first)) {
+        if (!detail::is_valid_port(first)) {
           return false;
         }
         parts.port = uri_part(first, it);
@@ -313,7 +320,7 @@ bool parse(string_view::const_iterator &it, string_view::const_iterator last,
         first = it;
         continue;
       }
-      else if (!isdigit(it, last)) {
+      else if (!detail::isdigit(it, last)) {
         return false;
       }
     }
@@ -335,7 +342,7 @@ bool parse(string_view::const_iterator &it, string_view::const_iterator last,
         break;
       }
 
-      if (!is_pchar(it, last) && !is_in(it, last, "/")) {
+      if (!detail::is_pchar(it, last) && !detail::is_in(it, last, "/")) {
         return false;
       }
       else {
@@ -348,7 +355,7 @@ bool parse(string_view::const_iterator &it, string_view::const_iterator last,
 
   if (state == uri_state::query) {
     while (it != last) {
-      if (!is_pchar(it, last) && !is_in(it, last, "?/")) {
+      if (!detail::is_pchar(it, last) && !detail::is_in(it, last, "?/")) {
         // If this is a fragment, keep going
         if (*it == '#') {
           parts.query = uri_part(first, it);
@@ -392,7 +399,7 @@ bool parse(string_view::const_iterator &it, string_view::const_iterator last,
       parts.path = uri_part(last, last);
     }
     else if (hp_state == hier_part_state::port) {
-      if (!is_valid_port(first)) {
+      if (!detail::is_valid_port(first)) {
         return false;
       }
       parts.port = uri_part(first, last);
@@ -407,6 +414,123 @@ bool parse(string_view::const_iterator &it, string_view::const_iterator last,
   }
   else if (state == uri_state::fragment) {
     parts.fragment = uri_part(first, last);
+  }
+
+  return true;
+}
+
+namespace detail {
+namespace {
+enum class authority_state {
+  user_info,
+  host,
+  host_ipv6,
+  port
+};
+}  // namespace
+
+bool parse_authority(string_view::const_iterator &it,
+                     string_view::const_iterator last,
+                     optional<string_view> &user_info,
+                     optional<string_view> &host,
+                     optional<string_view> &port) {
+  auto first = it;
+
+  auto state = authority_state::user_info;
+  while (it != last) {
+    if (state == authority_state::user_info) {
+      if (is_in(first, last, "@:")) {
+        return false;
+      }
+
+      if (*it == '@') {
+        user_info = uri_part(first, it);
+        state = authority_state::host;
+        ++it;
+        first = it;
+        continue;
+      }
+      else if (*it == '[') {
+        // this is an IPv6 address
+        state = authority_state::host_ipv6;
+        first = it;
+        continue;
+      }
+      else if (*it == ':') {
+        // this is actually the host, and the next part is expected to be the port
+        host = uri_part(first, it);
+        state = authority_state::port;
+        ++it;
+        first = it;
+        continue;
+      }
+    }
+    else if (state == authority_state::host) {
+      if (*first == ':') {
+        return false;
+      }
+
+      if (*it == ':') {
+        host = uri_part(first, it);
+        state = authority_state::port;
+        ++it;
+        first = it;
+        continue;
+      }
+    }
+    else if (state == authority_state::host_ipv6) {
+      if (*first != '[') {
+        return false;
+      }
+
+      if (*it == ']') {
+        host = uri_part(first, it);
+        ++it;
+        // Then test if the next part is a host, part, or the end of the file
+        if (it == last) {
+          break;
+        }
+        else if (*it == ':') {
+          host = uri_part(first, it);
+          state = authority_state::port;
+          ++it;
+          first = it;
+        }
+      }
+    }
+    else if (state == authority_state::port) {
+      if (*first == '/') {
+        // the port is empty, but valid
+        port = uri_part(first, it);
+        if (!is_valid_port(std::begin(*port))) {
+          return false;
+        }
+
+        continue;
+      }
+
+      if (!isdigit(it, last)) {
+        return false;
+      }
+    }
+
+    ++it;
+  }
+
+  if (state == authority_state::user_info) {
+    host = uri_part(first, last);
+  }
+  else if (state == authority_state::host) {
+    host = uri_part(first, last);
+  }
+  else if (state == authority_state::host_ipv6) {
+    host = uri_part(first, last);
+  }
+  else if (state == authority_state::port) {
+    port = uri_part(first, last);
+    if (!is_valid_port(std::begin(*port))) {
+      return false;
+    }
   }
 
   return true;

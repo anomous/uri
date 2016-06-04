@@ -16,7 +16,8 @@ string_view copy_part(Iterator first, Iterator last,
                       string_view::const_iterator &it) {
   auto part_first = it;
   std::advance(it, std::distance(first, last));
-  return detail::uri_part(part_first, it);
+  const char *ptr = &(*part_first);
+  return string_view(ptr, it - part_first);
 }
 }  // namespace
 

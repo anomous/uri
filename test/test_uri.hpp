@@ -7,12 +7,8 @@
 #define TEST_URI_INC
 
 #include <iterator>
-#include <network/uri/detail/uri_parts.hpp>
+#include <network/uri.hpp>
 #include "../src/detail/uri_parse.hpp"
-
-using network::detail::parse;
-using network::detail::uri_part;
-using network::detail::uri_parts;
 
 namespace test {
 struct uri {
@@ -24,7 +20,7 @@ struct uri {
   }
 
   bool parse_uri() {
-    return parse(it, last, parts);
+    return network::parse_uri(it, last, parts);
   }
 
   std::string parsed_till() const {
@@ -90,8 +86,7 @@ struct uri {
   std::string uri_;
   network::string_view view;
   network::string_view::const_iterator it, last;
-
-  uri_parts parts;
+  network::uri_parts parts;
 
 };
 }  // namespace test

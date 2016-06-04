@@ -6,13 +6,15 @@
 #ifndef NETWORK_DETAIL_URI_PARSE_INC
 #define NETWORK_DETAIL_URI_PARSE_INC
 
-#include <network/string_view.hpp>
+#include <network/uri/uri.hpp>
 
 namespace network {
 namespace detail {
-struct uri_parts;
-
-bool parse(string_view::const_iterator &first, string_view::const_iterator last, uri_parts &parts);
+bool parse_authority(string_view::const_iterator &first,
+                     string_view::const_iterator last,
+                     optional<string_view> &user_info,
+                     optional<string_view> &host,
+                     optional<string_view> &port);
 }  // namespace detail
 }  // namespace network
 
