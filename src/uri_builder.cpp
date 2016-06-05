@@ -6,7 +6,6 @@
 #include <locale>
 #include "network/uri/uri_builder.hpp"
 #include "detail/uri_normalize.hpp"
-#include "detail/uri_parse.hpp"
 #include "detail/algorithm.hpp"
 
 namespace network {
@@ -79,25 +78,6 @@ void uri_builder::set_port(string_type port) {
 uri_builder &uri_builder::clear_port() {
   port_ = network::nullopt;
   return *this;
-}
-
-void uri_builder::set_authority(string_type authority) {
-  optional<string_view> user_info, host, port;
-  uri::string_view view(authority);
-  uri::const_iterator it = std::begin(view), last = std::end(view);
-  detail::parse_authority(it, last, user_info, host, port);
-
-  if (user_info) {
-    set_user_info(user_info->to_string());
-  }
-
-  if (host) {
-    set_host(host->to_string());
-  }
-
-  if (port) {
-    set_port(port->to_string());
-  }
 }
 
 void uri_builder::set_path(string_type path) {

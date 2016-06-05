@@ -437,17 +437,17 @@ TEST(builder_test, relative_uri_scheme) {
   ASSERT_FALSE(builder.uri().has_scheme());
 }
 
-TEST(builder_test, authority) {
-  network::uri_builder builder;
-  builder
-    .scheme("http")
-    .authority("www.example.com:8080")
-    .path("/")
-    ;
-  ASSERT_EQ("http://www.example.com:8080/", builder.uri().string());
-  ASSERT_EQ("www.example.com", builder.uri().host());
-  ASSERT_EQ("8080", builder.uri().port());
-}
+// TEST(builder_test, authority) {
+//   network::uri_builder builder;
+//   builder
+//     .scheme("http")
+//     .authority("www.example.com:8080")
+//     .path("/")
+//     ;
+//   ASSERT_EQ("http://www.example.com:8080/", builder.uri().string());
+//   ASSERT_EQ("www.example.com", builder.uri().host());
+//   ASSERT_EQ("8080", builder.uri().port());
+// }
 
 TEST(builder_test, relative_uri_has_host) {
   network::uri_builder builder;
@@ -628,32 +628,32 @@ TEST(builder_test, build_from_existing_uri) {
   ASSERT_EQ("http://www.example.com/?a=1&b=2#fragment", builder.uri().string());
 }
 
-TEST(builder_test, authority_without_port_test) {
-  network::uri_builder builder;
-  builder
-    .scheme("https")
-    .authority("www.example.com")
-    ;
-  ASSERT_EQ("www.example.com", builder.uri().authority());
-}
-
-TEST(builder_test, authority_with_port_test) {
-  network::uri_builder builder;
-  builder
-    .scheme("https")
-    .authority("www.example.com:")
-    ;
-  ASSERT_EQ("www.example.com:", builder.uri().authority());
-}
-
-TEST(builder_test, DISABLED_authority_without_host_test) {
-  network::uri_builder builder;
-  builder
-    .scheme("https")
-    .authority(":1234")
-    ;
-  ASSERT_EQ(":1234", builder.uri().authority());
-}
+// TEST(builder_test, authority_without_port_test) {
+//   network::uri_builder builder;
+//   builder
+//     .scheme("https")
+//     .authority("www.example.com")
+//     ;
+//   ASSERT_EQ("www.example.com", builder.uri().authority());
+// }
+//
+// TEST(builder_test, authority_with_port_test) {
+//   network::uri_builder builder;
+//   builder
+//     .scheme("https")
+//     .authority("www.example.com:")
+//     ;
+//   ASSERT_EQ("www.example.com:", builder.uri().authority());
+// }
+//
+// TEST(builder_test, DISABLED_authority_without_host_test) {
+//   network::uri_builder builder;
+//   builder
+//     .scheme("https")
+//     .authority(":1234")
+//     ;
+//   ASSERT_EQ(":1234", builder.uri().authority());
+// }
 
 TEST(builder_test, clear_user_info_test) {
   network::uri instance("http://user@www.example.com:80/path?query#fragment");

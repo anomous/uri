@@ -9,19 +9,23 @@
 #include <string>
 #include <vector>
 #include <locale>
+#include <iterator>
 #include <network/optional.hpp>
 #include <network/uri/detail/decode.hpp>
 
 namespace network {
 namespace detail {
+template <class Iter>
+inline optional<typename std::iterator_traits<Iter>::value_type> percent_encode(
+    Iter it) {
+  using char_type = typename std::iterator_traits<Iter>::value_type;
 
-inline optional<char> percent_encode(std::string::const_iterator it) {
   try {
-    char output = '\0';
+    char_type output = '\0';
     detail::decode_char(it, &output);
     return output;
   } catch (percent_decoding_error &) {
-    return optional<char>();
+    return optional<char_type>();
   }
 }
 

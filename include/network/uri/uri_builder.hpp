@@ -26,14 +26,6 @@
 namespace network {
 #if !defined(DOXYGEN_SHOULD_SKIP_THIS)
 namespace detail {
-
-template <class T>
-struct host_converter {
-  uri::string_type operator()(const T &host) const {
-    return detail::translate(host);
-  }
-};
-
 template <class T, class Enable = void>
 struct port_converter {
   uri::string_type operator()(const T &port) const {
@@ -46,13 +38,6 @@ struct port_converter<T, typename std::enable_if<std::is_integral<
                              typename std::decay<T>::type>::value>::type> {
   uri::string_type operator()(std::uint16_t port) const {
     return std::to_string(port);
-  }
-};
-
-template <class T>
-struct path_converter {
-  uri::string_type operator()(const T &path) const {
-    return detail::translate(path);
   }
 };
 }  // namespace detail
@@ -129,8 +114,7 @@ class uri_builder {
    */
   template <typename Source>
   uri_builder &host(const Source &host) {
-    detail::host_converter<Source> convert;
-    set_host(convert(host));
+    set_host(detail::translate(host));
     return *this;
   }
 
@@ -153,25 +137,13 @@ class uri_builder {
   uri_builder &clear_port();
 
   /**
-   * \brief Adds a new authority to the uri_builder.
-   * \param authority The authority.
-   * \returns \c *this
-   */
-  template <typename Source>
-  uri_builder &authority(const Source &authority) {
-    set_authority(detail::translate(authority));
-    return *this;
-  }
-
-  /**
    * \brief Adds a new path to the uri_builder.
    * \param path The path.
    * \returns \c *this
    */
   template <typename Source>
   uri_builder &path(const Source &path) {
-    detail::path_converter<Source> convert;
-    set_path(convert(path));
+    set_path(detail::translate(path));
     return *this;
   }
 
@@ -250,7 +222,6 @@ class uri_builder {
   void set_user_info(string_type user_info);
   void set_host(string_type host);
   void set_port(string_type port);
-  void set_authority(string_type authority);
   void set_path(string_type path);
   void append_query(string_type query);
   void set_fragment(string_type fragment);

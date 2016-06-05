@@ -8,7 +8,6 @@
 
 #include <iterator>
 #include <network/uri.hpp>
-#include "../src/detail/uri_parse.hpp"
 
 namespace test {
 struct uri {

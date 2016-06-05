@@ -582,18 +582,6 @@ class uri {
 
 /**
  * \ingroup uri
- * \brief \c uri factory function.
- * \param first The first element in a string sequence.
- * \param last The end + 1th element in a string sequence.
- * \param ec Error code set if the sequence is not a valid URI.
- */
-template <class InputIter>
-inline uri make_uri(InputIter first, InputIter last, std::error_code &ec) {
-  return uri(first, last, ec);
-}
-
-/**
- * \ingroup uri
  * \brief Parse a URI, and break it down into parts.
  *
  * On failure, the iterator passed as 'first' will be at the character
@@ -607,6 +595,18 @@ inline uri make_uri(InputIter first, InputIter last, std::error_code &ec) {
  */
 bool parse_uri(string_view::const_iterator &first,
                string_view::const_iterator last, uri_parts &parts);
+
+/**
+ * \ingroup uri
+ * \brief \c uri factory function.
+ * \param first The first element in a string sequence.
+ * \param last The end + 1th element in a string sequence.
+ * \param ec Error code set if the sequence is not a valid URI.
+ */
+template <class InputIter>
+inline uri make_uri(InputIter first, InputIter last, std::error_code &ec) {
+  return uri(first, last, ec);
+}
 
 /**
  * \ingroup uri

@@ -31,8 +31,10 @@ CharT letter_to_hex(CharT in) {
   throw percent_decoding_error(uri_error::non_hex_input);
 }
 
-template <class InputIterator, class charT>
-InputIterator decode_char(InputIterator it, charT *out) {
+template <class InputIterator>
+InputIterator decode_char(
+    InputIterator it,
+    typename std::iterator_traits<InputIterator>::value_type *out) {
   assert(*it == '%');
   ++it;
   auto h0 = *it;
@@ -45,7 +47,8 @@ InputIterator decode_char(InputIterator it, charT *out) {
     throw percent_decoding_error(uri_error::conversion_failed);
   }
   ++it;
-  *out = static_cast<charT>((0x10 * v0) + v1);
+  *out = static_cast<typename std::iterator_traits<InputIterator>::value_type>(
+      (0x10 * v0) + v1);
   return it;
 }
 

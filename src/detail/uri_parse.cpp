@@ -3,7 +3,6 @@
 // (See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
 
-#include "uri_parse.hpp"
 #include <cstdlib>
 #include <cctype>
 #include <iterator>
@@ -36,6 +35,13 @@ enum class hier_part_state {
   path
 };
 
+enum class authority_state {
+  start,
+  host,
+  host_ipv6,
+  port
+};
+
 bool validate_scheme(string_view::const_iterator &it,
                      string_view::const_iterator last) {
   if (it == last) {
@@ -60,7 +66,7 @@ bool validate_scheme(string_view::const_iterator &it,
   return true;
 }
 
-bool validate_user_info(string_view::const_iterator it,
+bool is_valid_user_info(string_view::const_iterator it,
                         string_view::const_iterator last) {
   while (it != last) {
     if (!detail::is_unreserved(it, last) &&
@@ -88,6 +94,16 @@ bool set_host_and_port(string_view::const_iterator first,
       return false;
     }
     parts.port = uri_part(port_start, last);
+  }
+  return true;
+}
+
+bool validate_query(string_view::const_iterator &it,
+                    string_view::const_iterator last) {
+  while (it != last) {
+    if (!detail::is_pchar(it, last) && !detail::is_in(it, last, "?/")) {
+      return (*it == '#');
+    }
   }
   return true;
 }
@@ -164,7 +180,7 @@ bool parse_uri(string_view::const_iterator &it, string_view::const_iterator last
       }
 
       if (*it == '@') {
-        if (!validate_user_info(first, it)) {
+        if (!is_valid_user_info(first, it)) {
           return false;
         }
         parts.user_info = uri_part(first, it);
@@ -354,21 +370,16 @@ bool parse_uri(string_view::const_iterator &it, string_view::const_iterator last
   }
 
   if (state == uri_state::query) {
-    while (it != last) {
-      if (!detail::is_pchar(it, last) && !detail::is_in(it, last, "?/")) {
-        // If this is a fragment, keep going
-        if (*it == '#') {
-          parts.query = uri_part(first, it);
-          // move past the fragment delimiter
-          ++it;
-          first = it;
-          state = uri_state::fragment;
-          break;
-        }
-        else {
-          return false;
-        }
-      }
+    if (!validate_query(it, last)) {
+      return false;
+    }
+
+    if (*it == '#') {
+      parts.query = uri_part(first, it);
+      // move past the fragment delimiter
+      ++it;
+      first = it;
+      state = uri_state::fragment;
     }
   }
 
@@ -418,122 +429,4 @@ bool parse_uri(string_view::const_iterator &it, string_view::const_iterator last
 
   return true;
 }
-
-namespace detail {
-namespace {
-enum class authority_state {
-  user_info,
-  host,
-  host_ipv6,
-  port
-};
-}  // namespace
-
-bool parse_authority(string_view::const_iterator &it,
-                     string_view::const_iterator last,
-                     optional<string_view> &user_info,
-                     optional<string_view> &host,
-                     optional<string_view> &port) {
-  auto first = it;
-
-  auto state = authority_state::user_info;
-  while (it != last) {
-    if (state == authority_state::user_info) {
-      if (is_in(first, last, "@:")) {
-        return false;
-      }
-
-      if (*it == '@') {
-        user_info = uri_part(first, it);
-        state = authority_state::host;
-        ++it;
-        first = it;
-        continue;
-      }
-      else if (*it == '[') {
-        // this is an IPv6 address
-        state = authority_state::host_ipv6;
-        first = it;
-        continue;
-      }
-      else if (*it == ':') {
-        // this is actually the host, and the next part is expected to be the port
-        host = uri_part(first, it);
-        state = authority_state::port;
-        ++it;
-        first = it;
-        continue;
-      }
-    }
-    else if (state == authority_state::host) {
-      if (*first == ':') {
-        return false;
-      }
-
-      if (*it == ':') {
-        host = uri_part(first, it);
-        state = authority_state::port;
-        ++it;
-        first = it;
-        continue;
-      }
-    }
-    else if (state == authority_state::host_ipv6) {
-      if (*first != '[') {
-        return false;
-      }
-
-      if (*it == ']') {
-        host = uri_part(first, it);
-        ++it;
-        // Then test if the next part is a host, part, or the end of the file
-        if (it == last) {
-          break;
-        }
-        else if (*it == ':') {
-          host = uri_part(first, it);
-          state = authority_state::port;
-          ++it;
-          first = it;
-        }
-      }
-    }
-    else if (state == authority_state::port) {
-      if (*first == '/') {
-        // the port is empty, but valid
-        port = uri_part(first, it);
-        if (!is_valid_port(std::begin(*port))) {
-          return false;
-        }
-
-        continue;
-      }
-
-      if (!isdigit(it, last)) {
-        return false;
-      }
-    }
-
-    ++it;
-  }
-
-  if (state == authority_state::user_info) {
-    host = uri_part(first, last);
-  }
-  else if (state == authority_state::host) {
-    host = uri_part(first, last);
-  }
-  else if (state == authority_state::host_ipv6) {
-    host = uri_part(first, last);
-  }
-  else if (state == authority_state::port) {
-    port = uri_part(first, last);
-    if (!is_valid_port(std::begin(*port))) {
-      return false;
-    }
-  }
-
-  return true;
-}
-}  // namespace detail
 }  // namespace network
