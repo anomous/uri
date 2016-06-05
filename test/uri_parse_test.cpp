@@ -483,9 +483,7 @@ TEST(uri_parse_test, test_pct_encoded_user_info) {
 std::vector<std::string> create_urls(const std::string &filename) {
   std::vector<std::string> urls;
   std::ifstream ifs(filename);
-  std::cout << filename << std::endl;
   if (!ifs) {
-    std::cout << "Shit." << std::endl;
     throw std::runtime_error("Unable to open file: " + filename);
   }
   for (std::string url; std::getline(ifs, url);) {
