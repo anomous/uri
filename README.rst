@@ -3,12 +3,9 @@
 .. :Description: Source code for the cpp-netlib URI class.
 
 ################
- C++ Network URI
+ C++ Network URI (forked to use system Boost)
 ################
 
-.. image:: https://travis-ci.org/cpp-netlib/uri.png?branch=master
-  :target: https://travis-ci.org/cpp-netlib/uri
-  
 .. image:: https://img.shields.io/badge/license-boost-blue.svg
   :target: https://github.com/cpp-netlib/uri/blob/master/LICENSE_1_0.txt
 
@@ -57,11 +54,3 @@ This library is released under the Boost Software License (please see
 http://boost.org/LICENSE_1_0.txt or the accompanying LICENSE_1_0.txt
 file for the full text.
 
-Contact
-=======
-
-Any questions about this library can be addressed to the cpp-netlib
-`developers mailing list`_. Issues can be filed using Github at
-http://github.com/cpp-netlib/uri/issues.
-
-.. _`developers mailing list`: cpp-netlib@googlegroups.com
