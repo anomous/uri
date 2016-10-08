@@ -21,6 +21,7 @@ if(${CMAKE_CXX_COMPILER_ID} MATCHES Clang)
     target_link_libraries(network-uri "c++")
   endif()
 endif()
+target_include_directories(network-uri PUBLIC ${Boost_INCLUDE_DIR})
 
 #propagate sources to parent scope for one-lib-build
 set(Uri_SRCS ${Uri_SRCS} PARENT_SCOPE)

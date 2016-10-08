@@ -14,6 +14,7 @@ option(Uri_WARNINGS_AS_ERRORS "Treat warnings as errors." ON)
 option(Uri_USE_STATIC_CRT "Use static C Runtime library (/MT or MTd)." ON)
 
 find_package(Threads REQUIRED)
+find_package(Boost 1.59.0 REQUIRED)
 
 set(CMAKE_VERBOSE_MAKEFILE true)
 

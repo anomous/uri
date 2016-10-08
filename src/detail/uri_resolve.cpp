@@ -6,10 +6,10 @@
 
 #include "uri_resolve.hpp"
 #include <algorithm>
-#include "../boost/algorithm/string/find.hpp"
-#include "../boost/algorithm/string/erase.hpp"
-#include "../boost/algorithm/string/replace.hpp"
-#include "../boost/algorithm/string/predicate.hpp"
+#include <boost/algorithm/string/find.hpp>
+#include <boost/algorithm/string/erase.hpp>
+#include <boost/algorithm/string/replace.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 namespace network {
 namespace detail {
@@ -30,26 +30,26 @@ std::string remove_dot_segments(std::string input) {
   std::string result;
 
   while (!input.empty()) {
-    if (network_boost::starts_with(input, "../")) {
-      network_boost::erase_head(input, 3);
-    } else if (network_boost::starts_with(input, "./")) {
-      network_boost::erase_head(input, 2);
-    } else if (network_boost::starts_with(input, "/./")) {
-      network_boost::replace_head(input, 3, "/");
+    if (boost::starts_with(input, "../")) {
+      boost::erase_head(input, 3);
+    } else if (boost::starts_with(input, "./")) {
+      boost::erase_head(input, 2);
+    } else if (boost::starts_with(input, "/./")) {
+      boost::replace_head(input, 3, "/");
     } else if (input == "/.") {
-      network_boost::replace_head(input, 2, "/");
-    } else if (network_boost::starts_with(input, "/../")) {
-      network_boost::erase_head(input, 3);
+      boost::replace_head(input, 2, "/");
+    } else if (boost::starts_with(input, "/../")) {
+      boost::erase_head(input, 3);
       remove_last_segment(result);
-    } else if (network_boost::starts_with(input, "/..")) {
-      network_boost::replace_head(input, 3, "/");
+    } else if (boost::starts_with(input, "/..")) {
+      boost::replace_head(input, 3, "/");
       remove_last_segment(result);
-    } else if (network_boost::algorithm::all(input, [](char ch) { return ch == '.'; })) {
+    } else if (boost::algorithm::all(input, [](char ch) { return ch == '.'; })) {
       input.clear();
     }
     else {
       int n = (input.front() == '/')? 1 : 0;
-      auto slash = network_boost::find_nth(input, "/", n);
+      auto slash = boost::find_nth(input, "/", n);
       result.append(std::begin(input), std::begin(slash));
       input.erase(std::begin(input), std::begin(slash));
     }
@@ -69,7 +69,7 @@ std::string merge_paths(const uri& base, const uri& reference) {
     result = "/";
   } else {
     const auto& base_path = base.path();
-    auto last_slash = network_boost::find_last(base_path, "/");
+    auto last_slash = boost::find_last(base_path, "/");
     result.append(std::begin(base_path), std::end(last_slash));
   }
   if (reference.has_path()) {
